@@ -39,7 +39,9 @@ class OraclePools:
         prefix = name.upper()
         password = self.config[f"{prefix}_PASSWORD"]
         if not password:
-            raise OracleUnavailable(f"{prefix}_PASSWORD no está configurado")
+            raise OracleUnavailable(
+                f"{prefix}_PASSWORD_FILE no está configurado o el secreto no está disponible"
+            )
         dsn = driver.makedsn(
             self.config[f"{prefix}_HOST"],
             self.config[f"{prefix}_PORT"],

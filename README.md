@@ -71,7 +71,15 @@ Para servicio Windows, registre `scripts/start-windows.ps1` con el mecanismo cor
 1. Instale Oracle Instant Client 19 x64 en una ruta aprobada.
 2. Use Python x64 (`python -c "import struct; print(struct.calcsize('P')*8)"`).
 3. Configure `ORACLE_CLIENT_LIB_DIR` en `.env`.
-4. Configure `PVUDB_PASSWORD` y `DWO_PASSWORD` desde el almacén de secretos autorizado; no las agregue al repositorio.
+4. Instale los secretos como archivos protegidos y configure únicamente sus rutas en `.env`:
+
+```dotenv
+APP_SECRET_KEY_FILE=C:\SIGOC\secrets\app_secret_key.txt
+PVUDB_PASSWORD_FILE=C:\SIGOC\secrets\pvudb_password.txt
+DWO_PASSWORD_FILE=C:\SIGOC\secrets\dwo_password.txt
+```
+
+   Cada archivo contiene una sola línea. SIGOC da prioridad al archivo y nunca muestra su contenido. Consulte `secrets/README.md`.
 5. Confirme la procedencia del SQL incluido en `sql/pvudb_campaign.sql` siguiendo [sql/README.md](sql/README.md).
 6. Ejecute:
 
@@ -143,11 +151,12 @@ Las pruebas usan proveedores locales; nunca contactan AD ni Oracle. Cubren auten
 
 ## Seguridad y operación
 
-- `.env`, secretos, certificados privados y bases locales están ignorados por Git.
+- `.env`, archivos secretos, certificados privados y bases locales están ignorados por Git.
+- Las contraseñas Oracle y la clave de sesión se leen preferentemente desde archivos protegidos mediante variables `*_FILE`; `.env` solo contiene sus rutas.
 - Los logs nunca incluyen contraseñas.
 - El SQL PVUDB se valida como solo lectura y requiere parámetros enlazados.
 - Las consultas DWO usan binds y paginación.
-- Producción debe configurar `APP_SECRET_KEY` aleatoria, `SESSION_COOKIE_SECURE=true`, HTTPS y un almacenamiento central de rate limiting si hay varios procesos.
+- Producción debe configurar `APP_SECRET_KEY_FILE` con una clave aleatoria, `SESSION_COOKIE_SECURE=true`, HTTPS y un almacenamiento central de rate limiting si hay varios procesos.
 - Para rollback de aplicación, detenga el servicio, restaure la versión de código aprobada y reinicie. No se requieren migraciones DWO. La base SQLite local debe respaldarse antes de una actualización; el código solo crea tablas locales idempotentes.
 
 ## Archivos clave

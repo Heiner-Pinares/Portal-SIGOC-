@@ -18,7 +18,7 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
     if app.config["APP_ENV"] == "production" and app.config["SECRET_KEY"] == "development-only-change-me":
-        raise RuntimeError("APP_SECRET_KEY es obligatoria en producción")
+        raise RuntimeError("APP_SECRET_KEY_FILE es obligatoria en producción")
     os.makedirs(app.instance_path, exist_ok=True)
 
     from app.web import bp
@@ -57,10 +57,23 @@ def create_app(test_config=None):
     def diagnose():
         """Muestra dependencias y conectividad sin realizar escrituras."""
         import importlib.util
+        from app.secret_store import secret_source
         checks = {name: bool(importlib.util.find_spec(name)) for name in ("oracledb", "ldap3", "Crypto")}
         click.echo(f"Modo: {'simulación' if app.config['SIGOC_DEMO_MODE'] else 'corporativo'}")
         for name, ok in checks.items():
             click.echo(f"{name}: {'OK' if ok else 'NO DISPONIBLE'}")
+        click.echo(
+            "Clave de sesión: "
+            + secret_source(file_env="APP_SECRET_KEY_FILE", value_env="APP_SECRET_KEY")
+        )
+        click.echo(
+            "Secreto PVUDB: "
+            + secret_source(file_env="PVUDB_PASSWORD_FILE", value_env="PVUDB_PASSWORD")
+        )
+        click.echo(
+            "Secreto DWO: "
+            + secret_source(file_env="DWO_PASSWORD_FILE", value_env="DWO_PASSWORD")
+        )
         if app.config["LDAP_MODE"] == "plano":
             click.echo("ADVERTENCIA: LDAP plano configurado; solicitar StartTLS o LDAPS a TI.")
         pools = app.extensions.get("oracle_pools")

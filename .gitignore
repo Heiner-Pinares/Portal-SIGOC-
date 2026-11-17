@@ -9,5 +9,6 @@ instance/*.db
 instance/*.log
 *.pem
 *.key
-secrets/
+secrets/*
+!secrets/README.md
 

@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from app.secret_store import resolve_secret
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,7 +13,13 @@ def _bool(name: str, default: bool = False) -> bool:
 
 class Config:
     APP_ENV = os.getenv("APP_ENV", "development")
-    SECRET_KEY = os.getenv("APP_SECRET_KEY") or "development-only-change-me"
+    APP_SECRET_KEY_FILE = os.getenv("APP_SECRET_KEY_FILE", "")
+    SECRET_KEY = resolve_secret(
+        file_env="APP_SECRET_KEY_FILE",
+        value_env="APP_SECRET_KEY",
+        base_dir=BASE_DIR,
+        default="development-only-change-me",
+    )
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = _bool("SESSION_COOKIE_SECURE")
@@ -20,7 +28,12 @@ class Config:
 
     SIGOC_DEMO_MODE = _bool("SIGOC_DEMO_MODE", True)
     DEMO_USER = os.getenv("SIGOC_DEMO_LOCAL_USER", "demo")
-    DEMO_PASSWORD = os.getenv("SIGOC_DEMO_LOCAL_PASSWORD", "")
+    DEMO_PASSWORD_FILE = os.getenv("SIGOC_DEMO_LOCAL_PASSWORD_FILE", "")
+    DEMO_PASSWORD = resolve_secret(
+        file_env="SIGOC_DEMO_LOCAL_PASSWORD_FILE",
+        value_env="SIGOC_DEMO_LOCAL_PASSWORD",
+        base_dir=BASE_DIR,
+    )
     DATABASE_PATH = str(BASE_DIR / "instance" / "sigoc.db")
     AUDIT_LOG_PATH = os.getenv("AUDIT_LOG_PATH", str(BASE_DIR / "instance" / "audit.log"))
 
@@ -30,7 +43,12 @@ class Config:
     PVUDB_PORT = int(os.getenv("PVUDB_PORT", "1521"))
     PVUDB_SERVICE_NAME = os.getenv("PVUDB_SERVICE_NAME", "PVUDB")
     PVUDB_USER = os.getenv("PVUDB_USER", "C27826")
-    PVUDB_PASSWORD = os.getenv("PVUDB_PASSWORD", "")
+    PVUDB_PASSWORD_FILE = os.getenv("PVUDB_PASSWORD_FILE", "")
+    PVUDB_PASSWORD = resolve_secret(
+        file_env="PVUDB_PASSWORD_FILE",
+        value_env="PVUDB_PASSWORD",
+        base_dir=BASE_DIR,
+    )
     PVUDB_POOL_MIN = int(os.getenv("PVUDB_POOL_MIN", "1"))
     PVUDB_POOL_MAX = int(os.getenv("PVUDB_POOL_MAX", "4"))
 
@@ -38,7 +56,12 @@ class Config:
     DWO_PORT = int(os.getenv("DWO_PORT", "1521"))
     DWO_SERVICE_NAME = os.getenv("DWO_SERVICE_NAME", "DWO")
     DWO_USER = os.getenv("DWO_USER", "USRFACDOC")
-    DWO_PASSWORD = os.getenv("DWO_PASSWORD", "")
+    DWO_PASSWORD_FILE = os.getenv("DWO_PASSWORD_FILE", "")
+    DWO_PASSWORD = resolve_secret(
+        file_env="DWO_PASSWORD_FILE",
+        value_env="DWO_PASSWORD",
+        base_dir=BASE_DIR,
+    )
     DWO_SCHEMA = os.getenv("DWO_SCHEMA", "USRFACT")
     DWO_POOL_MIN = int(os.getenv("DWO_POOL_MIN", "1"))
     DWO_POOL_MAX = int(os.getenv("DWO_POOL_MAX", "4"))
