@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión · SIGOC{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block body %}
+<main class="login-shell">
+  <section class="login-brand">
+    <div class="brand-mark">Claro<span>✦</span></div>
+    <div>
+      <p class="eyebrow">Gestión comercial interna</p>
+      <h1>SIGOC</h1>
+      <p>Sistema de Gestión de Ofertas Comerciales</p>
+    </div>
+  </section>
+  <section class="login-card">
+    <p class="eyebrow red">Acceso seguro</p>
+    <h2>Bienvenido</h2>
+    <p class="muted">Ingresa con tu código corporativo o usuario local autorizado.</p>
+    {% if config.SIGOC_DEMO_MODE %}
+      <div class="notice warning"><strong>Simulación local.</strong> No hay conexión a Active Directory ni Oracle.</div>
+    {% endif %}
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('web.login_post') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Código C/E o usuario local
+        <input name="identity" autocomplete="username" required autofocus placeholder="C27826 o usuario">
+      </label>
+      <label>Contraseña
+        <input name="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+      </label>
+      <button class="button primary wide" type="submit">Iniciar sesión</button>
+    </form>
+    <p class="tiny muted">Las cuentas corporativas se validan exclusivamente mediante Active Directory. SIGOC nunca almacena tu contraseña de dominio.</p>
+  </section>
+</main>
+{% endblock %}
+

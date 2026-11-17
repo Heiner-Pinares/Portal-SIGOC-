@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="topbar">
+  <div class="brand-lockup">
+    <div class="brand-mark small">Claro<span>✦</span></div>
+    <div><strong>SIGOC</strong><span>Sistema de Gestión de Ofertas Comerciales</span></div>
+  </div>
+  <div class="user-block">
+    <div><small>USUARIO</small><strong>{{ g.user.display_name }}</strong></div>
+    <div><small>ROL</small><strong>{{ g.user.role|capitalize }}</strong></div>
+    <span class="mode-pill">● {{ 'SIMULACIÓN LOCAL' if config.SIGOC_DEMO_MODE else 'ORACLE CORPORATIVO' }}</span>
+    <form action="{{ url_for('web.logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="link-button" type="submit">Salir</button>
+    </form>
+  </div>
+</header>
+<main class="page-shell" data-view="{{ active }}">
+  <nav class="tabs" aria-label="Módulos SIGOC">
+    <a class="{{ 'active' if active == 'register' }}" href="{{ url_for('web.index') }}">Registrar campaña</a>
+    <a class="{{ 'active' if active == 'validity' }}" href="{{ url_for('web.validity') }}">Actualizar vigencia</a>
+    <a class="{{ 'active' if active == 'state' }}" href="{{ url_for('web.state') }}">Actualizar estado</a>
+    <a class="{{ 'active' if active == 'history' }}" href="{{ url_for('web.history') }}">Consultar histórico</a>
+    <span id="stored-count">Registros DWO: —</span>
+  </nav>
+
+  {% if config.SIGOC_DEMO_MODE %}
+    <div class="notice warning page-notice"><strong>Modo simulación:</strong> los datos de esta sesión son ejemplos locales identificados; no provienen de PVUDB ni se escriben en DWO.</div>
+  {% endif %}
+
+  {% if active == 'register' %}
+  <section class="page-heading">
+    <div><p class="eyebrow red">Flujo principal</p><h1>Registro de oferta comercial</h1><p>Busca una campaña, elige servicios, configura la promoción y revisa antes de guardar.</p></div>
+    <div class="flow-steps"><span class="on">1 Buscar</span><span>2 Seleccionar</span><span>3 Revisar</span><span>4 Guardar</span></div>
+  </section>
+  <section class="grid-two">
+    <article class="card">
+      <h2>Datos de la campaña</h2>
+      <form id="campaign-form" class="search-row">
+        <label>Código de campaña <em>*</em><input id="campaign-code" inputmode="numeric" pattern="[0-9]+" required placeholder="Ej. 3504"></label>
+        <button class="button primary" type="submit">Buscar campaña</button>
+      </form>
+      <p class="hint">En simulación puedes probar 3504 o 356. En modo corporativo se consulta PVUDB.</p>
+      <div class="field-grid">
+        <label>Nombre de campaña<input id="campaign-name" readonly placeholder="Se completa desde PVUDB"></label>
+        <label>Origen<input id="campaign-source" readonly value="Sin consulta"></label>
+      </div>
+      <div id="campaign-message" class="status-line" aria-live="polite"></div>
+    </article>
+    <article class="card">
+      <h2>Condiciones generales</h2>
+      <div class="field-grid three">
+        <label>Tipo de descuento<select id="discount-type"><option value="fixed">Monto fijo (S/)</option><option value="percent">Porcentaje (%)</option></select></label>
+        <label>Valor<input id="discount-value" type="number" min="0.01" step="0.01" value="10"></label>
+        <label>Periodo<select id="period"><option>1</option><option>3</option><option>6</option><option selected>12</option><option>18</option><option>24</option></select></label>
+      </div>
+      <div class="info-strip"><div><small>Previsualización</small><strong id="calculation-label">S/ 10.00 menos por mes</strong></div><div><small>Aplicación</small><strong>Solo servicios marcados</strong></div></div>
+      <p class="hint">Los cálculos mostrados son orientativos. El backend siempre recalcula y valida antes de guardar.</p>
+    </article>
+  </section>
+  <section class="card table-card">
+    <div class="card-heading"><div><p class="eyebrow red">Selección</p><h2>Planes y servicios asociados</h2></div><strong id="selection-count">0 seleccionados</strong></div>
+    <div class="table-wrap">
+      <table id="services-table"><thead><tr><th><input id="select-all" type="checkbox" aria-label="Seleccionar todo"></th><th>Plan / solución</th><th>Servicio</th><th>Cargo original</th><th>Descuento</th><th>Nuevo cargo</th><th>Códigos</th></tr></thead><tbody><tr class="empty-row"><td colspan="7">Busca una campaña para cargar sus servicios.</td></tr></tbody></table>
+    </div>
+    <div class="action-bar"><span id="save-hint" class="muted">Selecciona servicios y genera una vista previa.</span><button id="preview-button" class="button secondary" disabled>Revisar oferta</button><button id="new-button" class="button ghost">Nueva oferta</button></div>
+  </section>
+  <dialog id="preview-dialog">
+    <form method="dialog" class="dialog-card"><button class="dialog-close" value="cancel" aria-label="Cerrar">×</button><p class="eyebrow red">Confirmación</p><h2>Vista previa de la oferta</h2><p id="preview-campaign" class="muted"></p><div id="preview-counts" class="metric-grid"></div><div id="preview-list" class="preview-list"></div><div class="notice warning" id="write-warning"></div><div class="dialog-actions"><button class="button ghost" value="cancel">Volver</button><button id="save-button" class="button primary" type="button">Confirmar y guardar</button></div></form>
+  </dialog>
+  {% endif %}
+
+  {% if active == 'validity' %}
+  <section class="page-heading"><div><p class="eyebrow red">Mantenimiento</p><h1>Actualizar vigencia</h1><p>Define o modifica las fechas de una oferta registrada.</p></div></section>
+  <section class="card compact-card"><h2>Vigencia de la oferta</h2><form id="validity-form" class="stack"><label>Oferta guardada<select id="validity-key" required><option value="">Selecciona una oferta</option></select></label><div class="field-grid"><label>Fecha de inicio<input id="starts-on" type="date" required></label><label>Fecha de fin<input id="ends-on" type="date" required></label></div><div class="notice info">En Oracle, esta operación permanece bloqueada hasta confirmar las columnas reales de vigencia en DWO.</div><button class="button primary align-end" type="submit">Guardar vigencia</button></form></section>
+  {% endif %}
+
+  {% if active == 'state' %}
+  <section class="page-heading"><div><p class="eyebrow red">Mantenimiento</p><h1>Actualizar estado</h1><p>Edita el estado permitido de una oferta registrada.</p></div></section>
+  <section class="card compact-card"><h2>Estado de la oferta</h2><form id="state-form" class="stack"><label>Registro existente<select id="state-key" required><option value="">Selecciona una oferta</option></select></label><div class="field-grid"><label>Nuevo estado<select id="new-state"><option>PENDIENTE</option><option>INACTIVO</option><option>ANULADO</option></select></label><label>Motivo / observación<input id="state-note" maxlength="300" placeholder="Opcional"></label></div><div class="notice info">Los estados visibles son exclusivos de la simulación. En Oracle se usarán solo valores confirmados de ESTADO_NP.</div><button class="button primary align-end" type="submit">Actualizar estado</button></form></section>
+  {% endif %}
+
+  {% if active == 'history' %}
+  <section class="page-heading"><div><p class="eyebrow red">Trazabilidad</p><h1>Histórico de ofertas</h1><p>Consulta registros DWO con búsqueda y paginación.</p></div></section>
+  <section class="card table-card"><form id="history-form" class="filter-bar"><input id="history-query" placeholder="Buscar campaña, plan o LLAVE"><select id="history-state"><option value="">Todos los estados</option><option>PENDIENTE</option><option>INACTIVO</option><option>ANULADO</option></select><button class="button secondary">Buscar</button></form><div class="table-wrap"><table id="history-table"><thead><tr><th>LLAVE</th><th>Campaña</th><th>Plan / SNCODE</th><th>Descuento</th><th>Estado</th><th>Fecha carga</th></tr></thead><tbody></tbody></table></div><div class="pagination"><button id="prev-page" class="button ghost">Anterior</button><span id="page-label">Página 1</span><button id="next-page" class="button ghost">Siguiente</button></div></section>
+  {% endif %}
+</main>
+<footer><strong>SIGOC · Flujo PVUDB → DWO</strong><span>Integridad de datos · Seguridad corporativa · Trazabilidad</span></footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+{% endblock %}
+

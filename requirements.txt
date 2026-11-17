@@ -1,0 +1,7 @@
+Flask>=3.0,<4
+python-dotenv>=1.0,<2
+oracledb>=2.5,<4
+ldap3>=2.9,<3
+pycryptodome>=3.21,<4
+waitress>=3.0,<4
+
