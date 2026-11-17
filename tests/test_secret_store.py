@@ -60,3 +60,17 @@ def test_source_description_never_contains_secret(monkeypatch):
 
     assert description == "variable directa (PASSWORD, compatibilidad)"
     assert "valor-super-secreto" not in description
+
+
+def test_empty_legacy_variable_uses_safe_default(tmp_path, monkeypatch):
+    monkeypatch.delenv("APP_SECRET_KEY_FILE", raising=False)
+    monkeypatch.setenv("APP_SECRET_KEY", "")
+
+    value = resolve_secret(
+        file_env="APP_SECRET_KEY_FILE",
+        value_env="APP_SECRET_KEY",
+        base_dir=tmp_path,
+        default="development-only-change-me",
+    )
+
+    assert value == "development-only-change-me"

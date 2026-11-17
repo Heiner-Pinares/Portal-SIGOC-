@@ -37,7 +37,8 @@ def resolve_secret(*, file_env: str, value_env: str, base_dir: Path, default: st
         if not value:
             raise SecretConfigurationError(f"El archivo configurado en {file_env} está vacío")
         return value
-    return os.getenv(value_env, default)
+    direct_value = os.getenv(value_env)
+    return default if direct_value is None or direct_value == "" else direct_value
 
 
 def secret_source(*, file_env: str, value_env: str) -> str:

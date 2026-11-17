@@ -17,6 +17,8 @@ def create_app(test_config=None):
     app.config.from_object(Config)
     if test_config:
         app.config.update(test_config)
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError("SIGOC no puede iniciar sin una clave de sesión")
     if app.config["APP_ENV"] == "production" and app.config["SECRET_KEY"] == "development-only-change-me":
         raise RuntimeError("APP_SECRET_KEY_FILE es obligatoria en producción")
     os.makedirs(app.instance_path, exist_ok=True)
