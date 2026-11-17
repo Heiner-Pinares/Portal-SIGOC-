@@ -37,3 +37,19 @@ def test_invalid_page_is_controlled(logged_client):
     assert response.status_code == 400
     assert response.json["error"] == "Número de página inválido"
 
+
+def test_dwo_connection_error_is_controlled(logged_client):
+    class BrokenDWO:
+        def list_offers(self, *_args, **_kwargs):
+            raise RuntimeError("ORA-01017")
+
+    original = logged_client.application.extensions["dwo"]
+    logged_client.application.extensions["dwo"] = BrokenDWO()
+    try:
+        response = logged_client.get("/api/ofertas")
+    finally:
+        logged_client.application.extensions["dwo"] = original
+
+    assert response.status_code == 503
+    assert response.json["error"].startswith("No se pudo consultar DWO")
+

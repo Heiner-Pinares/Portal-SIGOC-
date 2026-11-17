@@ -27,7 +27,9 @@ def resolve_secret(*, file_env: str, value_env: str, base_dir: Path, default: st
                 raise SecretConfigurationError(
                     f"El archivo configurado en {file_env} supera el tamaño permitido"
                 )
-            value = path.read_text(encoding="utf-8").rstrip("\r\n")
+            # utf-8-sig acepta archivos UTF-8 normales y elimina el BOM que
+            # algunas versiones de Notepad agregan al inicio del archivo.
+            value = path.read_text(encoding="utf-8-sig").rstrip("\r\n")
         except SecretConfigurationError:
             raise
         except (OSError, UnicodeError) as exc:

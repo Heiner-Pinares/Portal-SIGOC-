@@ -74,3 +74,17 @@ def test_empty_legacy_variable_uses_safe_default(tmp_path, monkeypatch):
     )
 
     assert value == "development-only-change-me"
+
+
+def test_utf8_bom_is_not_part_of_secret(tmp_path, monkeypatch):
+    secret_file = tmp_path / "oracle.txt"
+    secret_file.write_bytes(b"\xef\xbb\xbfclave-oracle\r\n")
+    monkeypatch.setenv("ORACLE_PASSWORD_FILE", str(secret_file))
+
+    value = resolve_secret(
+        file_env="ORACLE_PASSWORD_FILE",
+        value_env="ORACLE_PASSWORD",
+        base_dir=tmp_path,
+    )
+
+    assert value == "clave-oracle"

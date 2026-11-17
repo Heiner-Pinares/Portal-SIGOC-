@@ -183,7 +183,11 @@ def offers():
         return jsonify(error="Número de página inválido"), 400
     query = request.args.get("q", "")[:100]
     state = request.args.get("state", "")[:40]
-    rows = _repo("dwo").list_offers(query, state, page, 20)
+    try:
+        rows = _repo("dwo").list_offers(query, state, page, 20)
+    except Exception:
+        current_app.logger.exception("No se pudo consultar DWO")
+        return jsonify(error="No se pudo consultar DWO. Verifica la conexión y las credenciales."), 503
     return jsonify(rows=rows, page=page, mode="demo" if current_app.config["SIGOC_DEMO_MODE"] else "oracle")
 
 
