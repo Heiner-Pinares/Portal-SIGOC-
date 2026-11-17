@@ -33,9 +33,13 @@ function Import-SecretFile(
         if (-not (Test-Path -LiteralPath $configuredPath -PathType Leaf)) {
             throw "No existe el archivo configurado en $FileVariable."
         }
-        $secretValue = (Get-Content -Raw -LiteralPath $configuredPath).TrimEnd("`r", "`n")
+        $rawSecret = Get-Content -Raw -LiteralPath $configuredPath
+        if ($null -eq $rawSecret) {
+            throw "El archivo configurado en $FileVariable esta vacio: $configuredPath"
+        }
+        $secretValue = $rawSecret.TrimEnd("`r", "`n")
         if ([string]::IsNullOrEmpty($secretValue)) {
-            throw "El archivo configurado en $FileVariable esta vacio."
+            throw "El archivo configurado en $FileVariable esta vacio: $configuredPath"
         }
         [Environment]::SetEnvironmentVariable($TargetVariable, $secretValue, "Process")
         Write-Host "$TargetVariable cargado desde archivo protegido."
